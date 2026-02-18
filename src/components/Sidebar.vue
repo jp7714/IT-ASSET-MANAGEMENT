@@ -5,8 +5,22 @@ import {
   Box, 
   Tags, 
   ClipboardList, 
-  LogOut 
+  LogOut,
+  ChevronLeft
 } from 'lucide-vue-next';
+
+const props = defineProps({
+  isCollapsed: {
+    type: Boolean,
+    default: false
+  },
+  isMobileOpen: {
+    type: Boolean,
+    default: false
+  }
+});
+
+const emit = defineEmits(['close-mobile']);
 
 const route = useRoute();
 
@@ -19,20 +33,35 @@ const links = [
 </script>
 
 <template>
-  <aside class="sidebar">
+  <aside 
+    class="sidebar" 
+    :class="{ 'collapsed': isCollapsed, 'mobile-open': isMobileOpen }"
+  >
     <div class="sidebar-header">
       <div class="logo">
         <Box class="logo-icon" />
-        <span class="logo-text">AssetManager</span>
+        <span class="logo-text" v-if="!isCollapsed">AssetManager</span>
       </div>
+      <button 
+        v-if="isMobileOpen" 
+        class="close-mobile-btn"
+        @click="$emit('close-mobile')"
+      >
+        <ChevronLeft class="close-icon" />
+      </button>
     </div>
 
     <nav class="sidebar-nav">
       <ul>
         <li v-for="link in links" :key="link.path">
-          <RouterLink :to="link.path" class="nav-link" :class="{ active: route.path.startsWith(link.path) }">
-            <component :is="link.icon" class="nav-icon" />
-            <span class="nav-text">{{ link.name }}</span>
+          <RouterLink 
+            :to="link.path" 
+            class="nav-link" 
+            :class="{ active: route.path.startsWith(link.path) }"
+            @click="$emit('close-mobile')"
+          >
+            <component :is="link.icon" class="nav-icon" :title="isCollapsed ? link.name : ''" />
+            <span class="nav-text" v-if="!isCollapsed">{{ link.name }}</span>
           </RouterLink>
         </li>
       </ul>
@@ -40,8 +69,8 @@ const links = [
 
     <div class="sidebar-footer">
       <RouterLink to="/login" class="nav-link logout-link">
-        <LogOut class="nav-icon" />
-        <span class="nav-text">Logout</span>
+        <LogOut class="nav-icon" :title="isCollapsed ? 'Logout' : ''" />
+        <span class="nav-text" v-if="!isCollapsed">Logout</span>
       </RouterLink>
     </div>
   </aside>
@@ -59,15 +88,22 @@ const links = [
   left: 0;
   top: 0;
   z-index: 50;
-  transition: transform 0.3s ease;
+  transition: width 0.3s ease, transform 0.3s ease;
+  overflow: hidden;
+}
+
+.sidebar.collapsed {
+  width: 80px;
 }
 
 .sidebar-header {
   height: 64px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0 1.5rem;
   border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
 }
 
 .logo {
@@ -80,18 +116,22 @@ const links = [
 .logo-icon {
   width: 24px;
   height: 24px;
+  min-width: 24px;
 }
 
 .logo-text {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--color-text-main);
+  opacity: 1;
+  transition: opacity 0.2s;
 }
 
 .sidebar-nav {
   flex: 1;
   padding: 1.5rem 1rem;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sidebar-nav ul {
@@ -113,6 +153,12 @@ const links = [
   border-radius: 0.5rem;
   transition: all 0.2s;
   font-weight: 500;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .nav-link {
+  justify-content: center;
+  padding: 0.75rem;
 }
 
 .nav-link:hover {
@@ -134,6 +180,7 @@ const links = [
 .nav-icon {
   width: 20px;
   height: 20px;
+  min-width: 20px;
 }
 
 .sidebar-footer {
@@ -150,13 +197,26 @@ const links = [
   color: var(--color-danger);
 }
 
+.close-mobile-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  display: none;
+}
+
 @media (max-width: 768px) {
   .sidebar {
+    width: 260px !important;
     transform: translateX(-100%);
   }
   
-  .sidebar.open {
+  .sidebar.mobile-open {
     transform: translateX(0);
+  }
+
+  .close-mobile-btn {
+    display: block;
   }
 }
 </style>
