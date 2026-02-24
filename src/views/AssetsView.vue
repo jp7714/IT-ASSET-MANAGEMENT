@@ -117,6 +117,20 @@ const getStatusColor = (status) => {
       </template>
     </AppTable>
 
+    <!-- Pagination (UI Only) -->
+    <div class="pagination">
+      <span class="pagination-info">Showing 1 to 5 of 50 entries</span>
+      <div class="pagination-controls">
+        <button class="btn btn-outline" disabled>Previous</button>
+        <button class="btn btn-primary">1</button>
+        <button class="btn btn-outline">2</button>
+        <button class="btn btn-outline">3</button>
+        <span class="pagination-ellipsis">...</span>
+        <button class="btn btn-outline">10</button>
+        <button class="btn btn-outline">Next</button>
+      </div>
+    </div>
+
     <!-- Modal -->
     <AppModal 
       :show="showModal" 
@@ -275,6 +289,44 @@ const getStatusColor = (status) => {
 .bg-success-soft { background-color: rgba(16, 185, 129, 0.15); }
 .bg-primary-soft { background-color: rgba(79, 70, 229, 0.15); }
 .bg-danger-soft { background-color: rgba(239, 68, 68, 0.15); }
+
+/* Pagination Styles */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.375rem;
+  align-items: center;
+}
+
+.pagination-controls .btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--color-border);
+}
+
+.pagination-controls .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+  color: var(--color-text-muted);
+  padding: 0 0.5rem;
+}
 
 /* Form Styles */
 .asset-form {
