@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { Plus, Search, Filter } from 'lucide-vue-next';
 import AppTable from '../components/AppTable.vue';
 import AppModal from '../components/AppModal.vue';
+import AssetForm from '../components/AssetForm.vue';
 
 // Mock Data
 const assets = ref([
@@ -23,33 +24,14 @@ const columns = [
 
 const showModal = ref(false);
 const editingAsset = ref(null);
-const formData = ref({
-  name: '',
-  tag: '',
-  category: '',
-  brand: '',
-  status: 'Available',
-  assignedTo: '',
-  notes: ''
-});
 
 const openAddModal = () => {
   editingAsset.value = null;
-  formData.value = {
-    name: '',
-    tag: '',
-    category: '',
-    brand: '',
-    status: 'Available',
-    assignedTo: '',
-    notes: ''
-  };
   showModal.value = true;
 };
 
 const openEditModal = (row) => {
-  editingAsset.value = row;
-  formData.value = { ...row, notes: '' }; // Mock notes
+  editingAsset.value = { ...row, notes: '' }; // Mock notes
   showModal.value = true;
 };
 
@@ -59,17 +41,17 @@ const handleDelete = (row) => {
   }
 };
 
-const saveAsset = () => {
-  if (editingAsset.value) {
+const saveAsset = (data) => {
+  if (editingAsset.value && editingAsset.value.id) {
     // Update
     const index = assets.value.findIndex(a => a.id === editingAsset.value.id);
     if (index !== -1) {
-      assets.value[index] = { ...formData.value, id: editingAsset.value.id };
+      assets.value[index] = { ...data, id: editingAsset.value.id };
     }
   } else {
     // Add
     const newId = Math.max(...assets.value.map(a => a.id)) + 1;
-    assets.value.push({ ...formData.value, id: newId });
+    assets.value.push({ ...data, id: newId });
   }
   showModal.value = false;
 };
@@ -134,63 +116,14 @@ const getStatusColor = (status) => {
     <!-- Modal -->
     <AppModal 
       :show="showModal" 
-      :title="editingAsset ? 'Edit Asset' : 'Add New Asset'" 
+      :title="editingAsset && editingAsset.id ? 'Edit Asset' : 'Add New Asset'" 
       @close="showModal = false"
     >
-      <form @submit.prevent="saveAsset" class="asset-form">
-        <div class="form-group">
-          <label>Asset Name</label>
-          <input v-model="formData.name" required placeholder="e.g. MacBook Pro" />
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Asset Tag</label>
-            <input v-model="formData.tag" required placeholder="e.g. AST-001" />
-          </div>
-          <div class="form-group">
-            <label>Category</label>
-             <select v-model="formData.category" required>
-              <option value="" disabled>Select Category</option>
-              <option>Laptop</option>
-              <option>Desktop</option>
-              <option>Phone</option>
-              <option>Monitor</option>
-              <option>Peripheral</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-           <div class="form-group">
-            <label>Brand / Model</label>
-            <input v-model="formData.brand" placeholder="e.g. Apple" />
-          </div>
-          <div class="form-group">
-            <label>Purchase Date</label>
-            <input type="date" v-model="formData.purchaseDate" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Status</label>
-          <select v-model="formData.status" required>
-            <option>Available</option>
-            <option>Assigned</option>
-            <option>Repair</option>
-            <option>Retired</option>
-          </select>
-        </div>
-        <div class="form-group" v-if="formData.status === 'Assigned'">
-          <label>Assigned To</label>
-          <input v-model="formData.assignedTo" placeholder="Employee Name" />
-        </div>
-        <div class="form-group">
-          <label>Notes</label>
-          <textarea v-model="formData.notes" rows="3"></textarea>
-        </div>
-      </form>
-      <template #footer>
-        <button class="btn btn-outline" @click="showModal = false">Cancel</button>
-        <button class="btn btn-primary" @click="saveAsset">Save Asset</button>
-      </template>
+      <AssetForm 
+        :initial-data="editingAsset" 
+        @save="saveAsset" 
+        @cancel="showModal = false" 
+      />
     </AppModal>
   </div>
 </template>
@@ -328,44 +261,4 @@ const getStatusColor = (status) => {
   padding: 0 0.5rem;
 }
 
-/* Form Styles */
-.asset-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form-row {
-  display: flex;
-  gap: 1rem;
-}
-
-.form-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  padding: 0.625rem;
-  background-color: var(--color-background);
-  border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
-  color: var(--color-text-main);
-  outline: none;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  border-color: var(--color-primary);
-}
 </style>
