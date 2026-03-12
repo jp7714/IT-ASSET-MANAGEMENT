@@ -1,8 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { Plus } from 'lucide-vue-next';
 import AppTable from '../components/AppTable.vue';
-import AppModal from '../components/AppModal.vue';
 
 const assignments = ref([
   { id: 1, asset: 'MacBook Pro 16"', tag: 'AST-001', employee: 'Sarah Jenkins', dept: 'Engineering', date: '2023-01-20', status: 'Active' },
@@ -19,7 +17,6 @@ const columns = [
   { key: 'status', label: 'Status' },
 ];
 
-const showModal = ref(false);
 const formData = ref({
   assetId: '',
   employee: '',
@@ -30,83 +27,104 @@ const formData = ref({
 
 // Mock Asset List for dropdown
 const availableAssets = [
-  { id: 101, name: 'Dell XPS 15 (AST-002)' },
-  { id: 102, name: 'Logitech MX Master 3 (AST-005)' },
+  { id: 101, name: 'Dell XPS 15', tag: 'AST-002' },
+  { id: 102, name: 'Logitech MX Master 3', tag: 'AST-005' },
+  { id: 103, name: 'iPad Pro', tag: 'AST-006' }
 ];
 
 const handleAssign = () => {
-  // Mock assignment
-  const asset = availableAssets.find(a => a.id == formData.value.assetId);
+  if (!formData.value.assetId || !formData.value.employee) return;
+  
+  const asset = availableAssets.find(a => a.id === formData.value.assetId);
   const newAssignment = {
     id: Date.now(),
-    asset: asset ? asset.name.split(' (')[0] : 'Unknown Asset',
-    tag: asset ? asset.name.split('(')[1].replace(')', '') : 'N/A',
+    asset: asset ? asset.name : 'Unknown Asset',
+    tag: asset ? asset.tag : 'N/A',
     employee: formData.value.employee,
-    dept: formData.value.dept,
+    dept: formData.value.dept || 'Unassigned',
     date: formData.value.date,
     status: 'Active'
   };
+  
   assignments.value.unshift(newAssignment);
-  showModal.value = false;
+  
+  // Reset form
+  formData.value = {
+    assetId: '',
+    employee: '',
+    dept: '',
+    date: new Date().toISOString().split('T')[0],
+    notes: ''
+  };
 };
 </script>
 
 <template>
   <div class="assignments-view">
     <div class="header-actions">
-      <h2>Assignments</h2>
-      <button class="btn btn-primary" @click="showModal = true">
-        <Plus class="btn-icon" /> New Assignment
-      </button>
+      <h2>Asset Assignment</h2>
+      <p class="subtitle">Assign available assets to employees</p>
     </div>
 
-    <!-- Assignments Table -->
-    <AppTable :columns="columns" :data="assignments">
-      <template #status="{ row }">
-        <span class="status-badge" :class="row.status === 'Active' ? 'active' : 'returned'">
-          {{ row.status }}
-        </span>
-      </template>
-    </AppTable>
+    <div class="dashboard-grid">
+      <!-- Assign Form Card -->
+      <div class="card assign-card">
+        <h3 class="card-title">New Assignment</h3>
+        <form @submit.prevent="handleAssign" class="assign-form">
+          <div class="form-group">
+            <label>Select Asset</label>
+            <select v-model="formData.assetId" required class="form-control">
+              <option value="" disabled>Choose an available asset...</option>
+              <option v-for="asset in availableAssets" :key="asset.id" :value="asset.id">
+                {{ asset.name }} ({{ asset.tag }})
+              </option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Employee Name</label>
+            <input v-model="formData.employee" required placeholder="e.g. John Doe" class="form-control" />
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Department</label>
+              <input v-model="formData.dept" placeholder="e.g. Engineering" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Assignment Date</label>
+              <input type="date" v-model="formData.date" required class="form-control" />
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Notes (Optional)</label>
+            <textarea v-model="formData.notes" rows="3" placeholder="Add any details about this assignment..." class="form-control"></textarea>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline" @click="formData = { assetId: '', employee: '', dept: '', date: new Date().toISOString().split('T')[0], notes: '' }">Clear</button>
+            <button type="submit" class="btn btn-primary">Assign Asset</button>
+          </div>
+        </form>
+      </div>
 
-    <!-- Assignment Modal -->
-    <AppModal 
-      :show="showModal" 
-      title="Assign Asset" 
-      @close="showModal = false"
-    >
-      <form @submit.prevent="handleAssign" class="assign-form">
-        <div class="form-group">
-          <label>Select Asset</label>
-          <select v-model="formData.assetId" required>
-            <option value="" disabled>Select an available asset</option>
-            <option v-for="asset in availableAssets" :key="asset.id" :value="asset.id">
-              {{ asset.name }}
-            </option>
-          </select>
+      <!-- History Table Card -->
+      <div class="card history-card">
+        <div class="card-header">
+          <h3 class="card-title">Assignment History</h3>
         </div>
-        <div class="form-group">
-          <label>Employee Name</label>
-          <input v-model="formData.employee" required placeholder="John Doe" />
+        <div class="table-container">
+          <AppTable :columns="columns" :data="assignments">
+            <template #status="{ row }">
+              <span class="status-badge" :class="row.status === 'Active' ? 'active' : 'returned'">
+                {{ row.status }}
+              </span>
+            </template>
+          </AppTable>
         </div>
-        <div class="form-group">
-          <label>Department</label>
-          <input v-model="formData.dept" placeholder="e.g. Engineering" />
-        </div>
-        <div class="form-group">
-          <label>Assignment Date</label>
-          <input type="date" v-model="formData.date" required />
-        </div>
-        <div class="form-group">
-          <label>Notes</label>
-          <textarea v-model="formData.notes" rows="2"></textarea>
-        </div>
-      </form>
-      <template #footer>
-        <button class="btn btn-outline" @click="showModal = false">Cancel</button>
-        <button class="btn btn-primary" @click="handleAssign">Assign</button>
-      </template>
-    </AppModal>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -115,50 +133,83 @@ const handleAssign = () => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .header-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 h2 {
   color: var(--color-text-main);
-  font-size: 1.5rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0;
 }
 
-.btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border-radius: 0.5rem;
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  font-weight: 500;
-  cursor: pointer;
+.subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  margin: 0;
 }
 
-.btn:hover {
-  opacity: 0.9;
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
 }
 
-.btn-icon {
-  width: 18px;
-  height: 18px;
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 350px 1fr;
+    align-items: start;
+  }
 }
 
-.btn-outline {
-  background-color: transparent;
+.card {
+  background-color: var(--color-surface);
+  border-radius: 1rem;
   border: 1px solid var(--color-border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
   color: var(--color-text-main);
+  margin: 0 0 1.25rem 0;
+}
+
+.card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.card-header .card-title {
+  margin: 0;
+}
+
+.assign-card {
+  padding: 1.5rem;
 }
 
 .assign-form {
   display: flex;
   flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
 
@@ -169,18 +220,98 @@ h2 {
 }
 
 .form-group label {
-  color: var(--color-text-muted);
+  color: var(--color-text-main);
   font-size: 0.875rem;
+  font-weight: 500;
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
-  padding: 0.625rem;
+.form-control {
+  padding: 0.625rem 0.875rem;
   background-color: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   color: var(--color-text-main);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-control::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+
+select.form-control {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem top 50%;
+  background-size: 0.65rem auto;
+  padding-right: 2.5rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover, #4338ca);
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text-main);
+}
+
+.btn-outline:hover {
+  background-color: var(--color-surface-hover, #f9fafb);
+  border-color: #d1d5db;
+}
+
+.table-container {
+  padding: 0;
 }
 
 .status-badge {
@@ -188,15 +319,17 @@ h2 {
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 500;
+  display: inline-flex;
 }
 
 .status-badge.active {
-  background-color: rgba(16, 185, 129, 0.15);
-  color: var(--color-success);
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .status-badge.returned {
-  background-color: var(--color-surface);
+  background-color: var(--color-background);
   color: var(--color-text-muted);
   border: 1px solid var(--color-border);
 }
