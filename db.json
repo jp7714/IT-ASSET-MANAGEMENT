@@ -1,0 +1,26 @@
+{
+  "assets": [
+    {
+      "id": 1,
+      "name": "Dell Laptop",
+      "tag": "LT1001",
+      "category": "Laptop",
+      "brand": "Dell Latitude",
+      "purchaseDate": "2025-01-10",
+      "status": "Available",
+      "assignedTo": null,
+      "notes": ""
+    }
+  ],
+  "categories": [
+    {
+      "id": 1,
+      "name": "Laptop"
+    },
+    {
+      "id": 2,
+      "name": "Monitor"
+    }
+  ],
+  "assignments": []
+}

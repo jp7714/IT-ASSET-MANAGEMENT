@@ -1,18 +1,22 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Plus, Search, Filter } from 'lucide-vue-next';
 import AppTable from '../components/AppTable.vue';
 import AppModal from '../components/AppModal.vue';
 import AssetForm from '../components/AssetForm.vue';
+import { getAssets } from '../services/assetService';
 
-// Mock Data
-const assets = ref([
-  { id: 1, name: 'MacBook Pro 16"', tag: 'AST-001', category: 'Laptop', brand: 'Apple', status: 'Assigned', purchaseDate: '2023-01-15', assignedTo: 'Sarah Jenkins' },
-  { id: 2, name: 'Dell XPS 15', tag: 'AST-002', category: 'Laptop', brand: 'Dell', status: 'Available', purchaseDate: '2023-02-10', assignedTo: '-' },
-  { id: 3, name: 'iPhone 13', tag: 'AST-003', category: 'Phone', brand: 'Apple', status: 'Repair', purchaseDate: '2022-11-20', assignedTo: '-' },
-  { id: 4, name: 'Dell UltraSharp 27"', tag: 'AST-004', category: 'Monitor', brand: 'Dell', status: 'Assigned', purchaseDate: '2023-01-10', assignedTo: 'Mike Ross' },
-  { id: 5, name: 'Logitech MX Master 3', tag: 'AST-005', category: 'Peripheral', brand: 'Logitech', status: 'Available', purchaseDate: '2023-03-05', assignedTo: '-' },
-]);
+// Data from API
+const assets = ref([]);
+
+onMounted(async () => {
+  try {
+    const response = await getAssets();
+    assets.value = response.data;
+  } catch (error) {
+    console.error("Error fetching assets:", error);
+  }
+});
 
 const columns = [
   { key: 'name', label: 'Asset Name' },
