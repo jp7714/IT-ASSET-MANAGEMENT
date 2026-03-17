@@ -4,7 +4,7 @@ import { Plus, Search, Filter } from 'lucide-vue-next';
 import AppTable from '../components/AppTable.vue';
 import AppModal from '../components/AppModal.vue';
 import AssetForm from '../components/AssetForm.vue';
-import { getAssets } from '../services/assetService';
+import { getAssets, addAsset } from '../services/assetService';
 
 // Data from API
 const assets = ref([]);
@@ -28,9 +28,13 @@ const columns = [
 
 const showModal = ref(false);
 const editingAsset = ref(null);
+const loading = ref(false);
+const error = ref('');
+const successMessage = ref('');
 
 const openAddModal = () => {
   editingAsset.value = null;
+  error.value = '';
   showModal.value = true;
 };
 
@@ -45,19 +49,52 @@ const handleDelete = (row) => {
   }
 };
 
-const saveAsset = (data) => {
+const saveAsset = async (data) => {
+  error.value = '';
+  
+  // Basic validation
+  if (!data.name || !data.tag || !data.category) {
+    error.value = "Please fill all required fields";
+    return;
+  }
+  
   if (editingAsset.value && editingAsset.value.id) {
-    // Update
+    // Update logic
     const index = assets.value.findIndex(a => a.id === editingAsset.value.id);
     if (index !== -1) {
       assets.value[index] = { ...data, id: editingAsset.value.id };
     }
+    showModal.value = false;
   } else {
-    // Add
-    const newId = Math.max(...assets.value.map(a => a.id)) + 1;
-    assets.value.push({ ...data, id: newId });
+    // Add logic
+    const exists = assets.value.find((a) => a.tag === data.tag);
+    if (exists) {
+      error.value = "Asset tag must be unique";
+      return;
+    }
+    
+    try {
+      loading.value = true;
+      await addAsset(data);
+      
+      // Refresh asset list
+      const response = await getAssets();
+      assets.value = response.data;
+      
+      showModal.value = false;
+      successMessage.value = "Asset added successfully";
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        successMessage.value = '';
+      }, 3000);
+    } catch (err) {
+      console.error("Error saving asset:", err);
+      error.value = "Failed to save asset. Please try again.";
+    } finally {
+      loading.value = false;
+    }
   }
-  showModal.value = false;
 };
 
 const getStatusColor = (status) => {
@@ -72,6 +109,11 @@ const getStatusColor = (status) => {
 
 <template>
   <div class="assets-view">
+    <!-- Success Message -->
+    <div v-if="successMessage" class="success-banner">
+      {{ successMessage }}
+    </div>
+
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="search-bar">
@@ -125,6 +167,8 @@ const getStatusColor = (status) => {
     >
       <AssetForm 
         :initial-data="editingAsset" 
+        :loading="loading"
+        :error="error"
         @save="saveAsset" 
         @cancel="showModal = false" 
       />
@@ -137,6 +181,17 @@ const getStatusColor = (status) => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.success-banner {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: var(--color-success, #10b981);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border-left: 4px solid var(--color-success, #10b981);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
 }
 
 .toolbar {

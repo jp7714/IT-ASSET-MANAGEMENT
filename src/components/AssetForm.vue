@@ -5,6 +5,14 @@ const props = defineProps({
   initialData: {
     type: Object,
     default: () => null
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  },
+  error: {
+    type: String,
+    default: ''
   }
 });
 
@@ -99,10 +107,17 @@ const handleSubmit = () => {
       <textarea v-model="formData.notes" rows="3" placeholder="Add any additional notes here..." class="input-field"></textarea>
     </div>
 
+    <!-- Error Message -->
+    <div v-if="error" class="error-message">
+      {{ error }}
+    </div>
+
     <!-- Actions -->
     <div class="form-actions">
-      <button type="button" class="btn btn-outline" @click="$emit('cancel')">Cancel</button>
-      <button type="submit" class="btn btn-primary">Save Asset</button>
+      <button type="button" class="btn btn-outline" @click="$emit('cancel')" :disabled="loading">Cancel</button>
+      <button type="submit" class="btn btn-primary" :disabled="loading">
+        {{ loading ? 'Saving...' : 'Save Asset' }}
+      </button>
     </div>
   </form>
 </template>
@@ -157,6 +172,17 @@ const handleSubmit = () => {
   opacity: 0.7;
 }
 
+/* Error Message */
+.error-message {
+  color: var(--color-danger, #ef4444);
+  font-size: 0.875rem;
+  padding: 0.75rem;
+  background-color: var(--color-danger-soft, rgba(239, 68, 68, 0.1));
+  border-radius: 0.5rem;
+  border-left: 3px solid var(--color-danger, #ef4444);
+  margin-top: 0.5rem;
+}
+
 /* Actions */
 .form-actions {
   display: flex;
@@ -178,6 +204,11 @@ const handleSubmit = () => {
   transition: all 0.2s;
   border: 1px solid transparent;
   cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-primary {
