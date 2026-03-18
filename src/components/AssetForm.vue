@@ -1,5 +1,4 @@
-<script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 const props = defineProps({
   initialData: {
@@ -46,6 +45,8 @@ watch(() => props.initialData, (newVal) => {
   }
 }, { immediate: true, deep: true });
 
+const isEditMode = computed(() => !!props.initialData && !!props.initialData.id);
+
 const handleSubmit = () => {
   emit('save', { ...formData.value });
 };
@@ -61,7 +62,7 @@ const handleSubmit = () => {
     <div class="form-row">
       <div class="form-group">
         <label>Asset Tag</label>
-        <input v-model="formData.tag" required placeholder="e.g. AST-001" class="input-field" />
+        <input v-model="formData.tag" required placeholder="e.g. AST-001" class="input-field" :disabled="isEditMode" />
       </div>
       <div class="form-group">
         <label>Category</label>
@@ -116,7 +117,7 @@ const handleSubmit = () => {
     <div class="form-actions">
       <button type="button" class="btn btn-outline" @click="$emit('cancel')" :disabled="loading">Cancel</button>
       <button type="submit" class="btn btn-primary" :disabled="loading">
-        {{ loading ? 'Saving...' : 'Save Asset' }}
+        {{ loading ? 'Saving...' : (isEditMode ? 'Update Asset' : 'Add Asset') }}
       </button>
     </div>
   </form>
@@ -165,6 +166,13 @@ const handleSubmit = () => {
 .input-field:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.input-field:disabled {
+  background-color: var(--color-surface, #f8f9fa);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .input-field::placeholder {

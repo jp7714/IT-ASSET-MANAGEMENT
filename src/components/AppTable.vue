@@ -11,6 +11,10 @@ defineProps({
   actions: {
     type: Boolean,
     default: false
+  },
+  selectedRowId: {
+    type: [String, Number],
+    default: null
   }
 });
 
@@ -34,7 +38,7 @@ defineEmits(['edit', 'delete']);
             No data available
           </td>
         </tr>
-        <tr v-for="(row, index) in data" :key="row.id || index">
+        <tr v-for="(row, index) in data" :key="row.id || index" :class="{ 'highlighted-row': selectedRowId === row.id }">
           <td v-for="col in columns" :key="col.key" :class="col.align || 'left'">
             <slot :name="col.key" :row="row">
               {{ row[col.key] }}
@@ -87,6 +91,12 @@ td {
 
 tr:hover td {
   background-color: rgba(255, 255, 255, 0.02);
+}
+
+tr.highlighted-row td {
+  background-color: rgba(79, 70, 229, 0.1);
+  border-top-color: var(--color-primary);
+  border-bottom: 1px solid var(--color-primary);
 }
 
 .empty-state {

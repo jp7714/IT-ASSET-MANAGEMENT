@@ -4,7 +4,7 @@ import { Plus, Search, Filter } from 'lucide-vue-next';
 import AppTable from '../components/AppTable.vue';
 import AppModal from '../components/AppModal.vue';
 import AssetForm from '../components/AssetForm.vue';
-import { getAssets, addAsset } from '../services/assetService';
+import { getAssets, addAsset, updateAsset } from '../services/assetService';
 
 // Data from API
 const assets = ref([]);
@@ -60,11 +60,27 @@ const saveAsset = async (data) => {
   
   if (editingAsset.value && editingAsset.value.id) {
     // Update logic
-    const index = assets.value.findIndex(a => a.id === editingAsset.value.id);
-    if (index !== -1) {
-      assets.value[index] = { ...data, id: editingAsset.value.id };
+    try {
+      loading.value = true;
+      await updateAsset(editingAsset.value.id, data);
+      
+      // Refresh asset list
+      const response = await getAssets();
+      assets.value = response.data;
+      
+      showModal.value = false;
+      successMessage.value = "Asset updated successfully";
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        successMessage.value = '';
+      }, 3000);
+    } catch (err) {
+      console.error("Error updating asset:", err);
+      error.value = "Failed to update asset. Please try again.";
+    } finally {
+      loading.value = false;
     }
-    showModal.value = false;
   } else {
     // Add logic
     const exists = assets.value.find((a) => a.tag === data.tag);
@@ -135,6 +151,7 @@ const getStatusColor = (status) => {
       :columns="columns" 
       :data="assets" 
       actions 
+      :selected-row-id="editingAsset?.id"
       @edit="openEditModal" 
       @delete="handleDelete"
     >
