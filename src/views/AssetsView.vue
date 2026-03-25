@@ -4,7 +4,7 @@ import { Plus, Search, Filter } from 'lucide-vue-next';
 import AppTable from '../components/AppTable.vue';
 import AppModal from '../components/AppModal.vue';
 import AssetForm from '../components/AssetForm.vue';
-import { getAssets, addAsset, updateAsset } from '../services/assetService';
+import { getAssets, addAsset, updateAsset, deleteAsset } from '../services/assetService';
 
 // Data from API
 const assets = ref([]);
@@ -31,6 +31,7 @@ const editingAsset = ref(null);
 const loading = ref(false);
 const error = ref('');
 const successMessage = ref('');
+const deletingId = ref(null);
 
 const openAddModal = () => {
   editingAsset.value = null;
@@ -43,9 +44,32 @@ const openEditModal = (row) => {
   showModal.value = true;
 };
 
-const handleDelete = (row) => {
-  if (confirm(`Are you sure you want to delete ${row.name}?`)) {
-    assets.value = assets.value.filter(a => a.id !== row.id);
+const handleDelete = async (row) => {
+  if (row.status === 'Assigned') {
+    alert("Cannot delete assigned asset");
+    return;
+  }
+
+  const confirmDelete = confirm(`Are you sure you want to delete ${row.name}?`);
+  if (!confirmDelete) return;
+
+  try {
+    deletingId.value = row.id;
+    await deleteAsset(row.id);
+    
+    successMessage.value = "Asset deleted successfully";
+    setTimeout(() => {
+      successMessage.value = '';
+    }, 3000);
+    
+    // Refresh asset list
+    const response = await getAssets();
+    assets.value = response.data;
+  } catch (err) {
+    console.error("Error deleting asset:", err);
+    error.value = "Failed to delete asset. Please try again.";
+  } finally {
+    deletingId.value = null;
   }
 };
 
@@ -152,6 +176,7 @@ const getStatusColor = (status) => {
       :data="assets" 
       actions 
       :selected-row-id="editingAsset?.id"
+      :deleting-id="deletingId"
       @edit="openEditModal" 
       @delete="handleDelete"
     >

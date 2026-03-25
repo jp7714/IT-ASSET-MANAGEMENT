@@ -1,0 +1,119 @@
+﻿[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 17 modules transformed.
+node.exe : 
+[31mΓ£ù[39m Build 
+failed in 205ms
+At line:1 char:1
++ & "C:\Program Files\
+nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: ([31mΓ£ù[   
+ 39m Build failed     
+in 205ms:String)     
+[], RemoteExcepti    
+on
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+[31merror during 
+build:
+[31m[vite:vue] 
+[plugin vite:vue] src/
+components/AssetForm.v
+ue (53:1): Invalid 
+end tag.[31m
+file: [36mC:/Users/pp
+ate/OneDrive/Desktop/I
+T-ASSET-MANAGEMENT/src
+/components/AssetForm.
+vue:53:1[31m
+SyntaxError: [plugin 
+vite:vue] src/componen
+ts/AssetForm.vue 
+(53:1): Invalid end 
+tag.
+    at 
+createCompilerError (C
+:\Users\ppate\OneDrive
+\Desktop\IT-ASSET-MANA
+GEMENT\node_modules\@v
+ue\compiler-core\dist\
+compiler-core.cjs.prod
+.js:1374:17)
+    at emitError (C:\U
+sers\ppate\OneDrive\De
+sktop\IT-ASSET-MANAGEM
+ENT\node_modules\@vue\
+compiler-core\dist\com
+piler-core.cjs.prod.js
+:2980:5)
+    at 
+Object.onclosetag (C:\
+Users\ppate\OneDrive\D
+esktop\IT-ASSET-MANAGE
+MENT\node_modules\@vue
+\compiler-core\dist\co
+mpiler-core.cjs.prod.j
+s:2387:9)
+    at Tokenizer.state
+InClosingTagName (C:\U
+sers\ppate\OneDrive\De
+sktop\IT-ASSET-MANAGEM
+ENT\node_modules\@vue\
+compiler-core\dist\com
+piler-core.cjs.prod.js
+:799:16)
+    at 
+Tokenizer.parse (C:\Us
+ers\ppate\OneDrive\Des
+ktop\IT-ASSET-MANAGEME
+NT\node_modules\@vue\c
+ompiler-core\dist\comp
+iler-core.cjs.prod.js:
+1157:16)
+    at 
+Object.baseParse (C:\U
+sers\ppate\OneDrive\De
+sktop\IT-ASSET-MANAGEM
+ENT\node_modules\@vue\
+compiler-core\dist\com
+piler-core.cjs.prod.js
+:3012:13)
+    at Object.parse (C
+:\Users\ppate\OneDrive
+\Desktop\IT-ASSET-MANA
+GEMENT\node_modules\@v
+ue\compiler-dom\dist\c
+ompiler-dom.cjs.prod.j
+s:665:23)
+    at Object.parse$1 
+[as parse] (C:\Users\p
+pate\OneDrive\Desktop\
+IT-ASSET-MANAGEMENT\no
+de_modules\@vue\compil
+er-sfc\dist\compiler-s
+fc.cjs.js:1824:24)
+    at 
+createDescriptor (file
+:///C:/Users/ppate/One
+Drive/Desktop/IT-ASSET
+-MANAGEMENT/node_modul
+es/@vitejs/plugin-vue/
+dist/index.mjs:54:42)
+    at transformMain (
+file:///C:/Users/ppate
+/OneDrive/Desktop/IT-A
+SSET-MANAGEMENT/node_m
+odules/@vitejs/plugin-
+vue/dist/index.mjs:131
+9:33)[39m

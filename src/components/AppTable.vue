@@ -15,6 +15,10 @@ defineProps({
   selectedRowId: {
     type: [String, Number],
     default: null
+  },
+  deletingId: {
+    type: [String, Number],
+    default: null
   }
 });
 
@@ -48,8 +52,8 @@ defineEmits(['edit', 'delete']);
             <button class="action-btn edit" @click="$emit('edit', row)">
               Edit
             </button>
-            <button class="action-btn delete" @click="$emit('delete', row)">
-              Delete
+            <button class="action-btn delete" @click="$emit('delete', row)" :disabled="deletingId === row.id">
+              {{ deletingId === row.id ? 'Deleting...' : 'Delete' }}
             </button>
           </td>
         </tr>
@@ -141,8 +145,13 @@ tr.highlighted-row td {
   background-color: rgba(239, 68, 68, 0.1);
 }
 
-.action-btn.delete:hover {
+.action-btn.delete:hover:not(:disabled) {
   background-color: var(--color-danger);
   color: white;
+}
+
+.action-btn.delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
