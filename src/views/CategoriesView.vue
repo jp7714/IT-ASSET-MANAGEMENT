@@ -1,61 +1,124 @@
 <script setup>
-import { ref } from 'vue';
-import { Plus, Search } from 'lucide-vue-next';
+import { ref, onMounted } from 'vue';
+import { Plus } from 'lucide-vue-next';
 import AppTable from '../components/AppTable.vue';
 import AppModal from '../components/AppModal.vue';
+import { getCategories, addCategory, updateCategory, deleteCategory } from '../services/categoryService';
+import { getAssets } from '../services/assetService';
 
-const categories = ref([
-  { id: 1, name: 'Laptop', description: 'Portable computers', count: 145 },
-  { id: 2, name: 'Desktop', description: 'Workstations and towers', count: 50 },
-  { id: 3, name: 'Monitor', description: 'External displays', count: 88 },
-  { id: 4, name: 'Phone', description: 'Mobile devices', count: 42 },
-  { id: 5, name: 'Peripheral', description: 'Keyboards, mice, headsets', count: 200 },
-]);
+const categories = ref([]);
+const assets = ref([]);
 
 const columns = [
   { key: 'name', label: 'Category Name' },
   { key: 'description', label: 'Description' },
-  { key: 'count', label: 'Asset Count', align: 'center' },
 ];
 
 const showModal = ref(false);
 const editingCategory = ref(null);
 const formData = ref({ name: '', description: '' });
+const error = ref('');
+const success = ref('');
+
+const fetchCategories = async () => {
+  try {
+    const res = await getCategories();
+    categories.value = res.data;
+  } catch (err) {
+    console.error('Failed to fetch categories:', err);
+    error.value = 'Failed to fetch categories';
+  }
+};
+
+const fetchAssets = async () => {
+  try {
+    const res = await getAssets();
+    assets.value = res.data;
+  } catch (err) {
+    console.error('Failed to fetch assets:', err);
+  }
+};
+
+onMounted(async () => {
+  await fetchCategories();
+  await fetchAssets();
+});
 
 const openAddModal = () => {
   editingCategory.value = null;
   formData.value = { name: '', description: '' };
+  error.value = '';
   showModal.value = true;
 };
 
 const openEditModal = (row) => {
   editingCategory.value = row;
   formData.value = { ...row };
+  error.value = '';
   showModal.value = true;
 };
 
-const handleDelete = (row) => {
-  if (confirm(`Delete category ${row.name}?`)) {
-    categories.value = categories.value.filter(c => c.id !== row.id);
+const handleDelete = async (row) => {
+  const isUsed = assets.value.some((a) => a.category === row.name);
+  if (isUsed) {
+    alert("Category is used in assets");
+    return;
+  }
+
+  const confirmDelete = confirm(`Delete category ${row.name}?`);
+  if (!confirmDelete) return;
+
+  try {
+    await deleteCategory(row.id);
+    success.value = "Category deleted successfully";
+    await fetchCategories();
+    setTimeout(() => success.value = '', 3000);
+  } catch (err) {
+    console.error('Failed to delete category:', err);
+    alert('Failed to delete category');
   }
 };
 
-const saveCategory = () => {
-  if (editingCategory.value) {
-    const index = categories.value.findIndex(c => c.id === editingCategory.value.id);
-    if (index !== -1) {
-      categories.value[index] = { ...formData.value, id: editingCategory.value.id, count: editingCategory.value.count };
-    }
-  } else {
-    const newId = Math.max(...categories.value.map(c => c.id)) + 1;
-    categories.value.push({ ...formData.value, id: newId, count: 0 });
+const saveCategory = async () => {
+  error.value = '';
+  
+  if (!formData.value.name) {
+    error.value = 'Category name is required';
+    return;
   }
-  showModal.value = false;
+
+  const isDuplicate = categories.value.some(
+    (c) => c.name.toLowerCase() === formData.value.name.toLowerCase() && c.id !== editingCategory.value?.id
+  );
+
+  if (isDuplicate) {
+    error.value = "Category already exists";
+    return;
+  }
+
+  try {
+    if (editingCategory.value) {
+      await updateCategory(editingCategory.value.id, formData.value);
+      success.value = "Category updated successfully";
+    } else {
+      await addCategory(formData.value);
+      success.value = "Category added successfully";
+    }
+    
+    showModal.value = false;
+    await fetchCategories();
+    setTimeout(() => success.value = '', 3000);
+  } catch (err) {
+    console.error('Failed to save category:', err);
+    error.value = 'Failed to save category';
+  }
 };
 </script>
 
 <template>
   <div class="categories-view">
+    <div v-if="success" class="alert success">{{ success }}</div>
+
     <div class="header-actions">
       <h2>Categories</h2>
       <button class="btn btn-primary" @click="openAddModal">
@@ -76,6 +139,8 @@ const saveCategory = () => {
       :title="editingCategory ? 'Edit Category' : 'New Category'" 
       @close="showModal = false"
     >
+      <div v-if="error" class="alert error">{{ error }}</div>
+
       <form @submit.prevent="saveCategory" class="category-form">
         <div class="form-group">
           <label>Category Name</label>
@@ -88,7 +153,7 @@ const saveCategory = () => {
       </form>
       <template #footer>
         <button class="btn btn-outline" @click="showModal = false">Cancel</button>
-        <button class="btn btn-primary" @click="saveCategory">Save</button>
+        <button class="btn btn-primary" @click="saveCategory">{{ editingCategory ? "Update Category" : "Add Category" }}</button>
       </template>
     </AppModal>
   </div>
@@ -174,5 +239,23 @@ h2 {
 .form-group textarea:focus {
   outline: 1px solid var(--color-primary);
   border-color: var(--color-primary);
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.alert.success {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.alert.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 </style>
