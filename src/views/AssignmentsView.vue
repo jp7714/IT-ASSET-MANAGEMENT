@@ -1,61 +1,100 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import AppTable from '../components/AppTable.vue';
+import { getAssets, updateAsset } from "../services/assetService";
+import { getAssignments, addAssignment } from "../services/assignmentService";
 
-const assignments = ref([
-  { id: 1, asset: 'MacBook Pro 16"', tag: 'AST-001', employee: 'Sarah Jenkins', dept: 'Engineering', date: '2023-01-20', status: 'Active' },
-  { id: 2, asset: 'Dell UltraSharp 27"', tag: 'AST-004', employee: 'Mike Ross', dept: 'Design', date: '2023-02-15', status: 'Active' },
-  { id: 3, asset: 'iPhone 13', tag: 'AST-003', employee: 'John Doe', dept: 'Sales', date: '2022-12-01', status: 'Returned' },
-]);
+const assets = ref([]);
+const assignments = ref([]);
+
+const form = ref({
+  assetId: "",
+  employeeName: "",
+  assignedDate: new Date().toISOString().split("T")[0]
+});
+
+const error = ref('');
+const successMessage = ref('');
+const isProcessing = ref(false);
 
 const columns = [
-  { key: 'asset', label: 'Asset Name' },
-  { key: 'tag', label: 'Tag' },
-  { key: 'employee', label: 'Employee' },
-  { key: 'dept', label: 'Department' },
-  { key: 'date', label: 'Assigned Date' },
+  { key: 'assetName', label: 'Asset Name' },
+  { key: 'employeeName', label: 'Employee Name' },
+  { key: 'assignedDate', label: 'Assigned Date' },
   { key: 'status', label: 'Status' },
 ];
 
-const formData = ref({
-  assetId: '',
-  employee: '',
-  dept: '',
-  date: new Date().toISOString().split('T')[0],
-  notes: ''
+const availableAssets = computed(() =>
+  assets.value.filter(a => a.status === "Available")
+);
+
+const fetchData = async () => {
+  try {
+    const assetRes = await getAssets();
+    const assignRes = await getAssignments();
+
+    assets.value = assetRes.data;
+    assignments.value = assignRes.data;
+  } catch (err) {
+    console.error("Error fetching data:", err);
+    error.value = "Failed to load data";
+  }
+};
+
+onMounted(async () => {
+  await fetchData();
 });
 
-// Mock Asset List for dropdown
-const availableAssets = [
-  { id: 101, name: 'Dell XPS 15', tag: 'AST-002' },
-  { id: 102, name: 'Logitech MX Master 3', tag: 'AST-005' },
-  { id: 103, name: 'iPad Pro', tag: 'AST-006' }
-];
+const handleAssign = async () => {
+  error.value = '';
+  successMessage.value = '';
 
-const handleAssign = () => {
-  if (!formData.value.assetId || !formData.value.employee) return;
-  
-  const asset = availableAssets.find(a => a.id === formData.value.assetId);
-  const newAssignment = {
-    id: Date.now(),
-    asset: asset ? asset.name : 'Unknown Asset',
-    tag: asset ? asset.tag : 'N/A',
-    employee: formData.value.employee,
-    dept: formData.value.dept || 'Unassigned',
-    date: formData.value.date,
-    status: 'Active'
-  };
-  
-  assignments.value.unshift(newAssignment);
-  
-  // Reset form
-  formData.value = {
-    assetId: '',
-    employee: '',
-    dept: '',
-    date: new Date().toISOString().split('T')[0],
-    notes: ''
-  };
+  if (!form.value.assetId || !form.value.employeeName) {
+    error.value = "All fields are required";
+    return;
+  }
+
+  isProcessing.value = true;
+
+  try {
+    const asset = assets.value.find(a => a.id === form.value.assetId);
+
+    if (!asset) {
+      error.value = "Invalid asset selected";
+      return;
+    }
+
+    // Add assignment
+    await addAssignment({
+      ...form.value,
+      assetName: asset.name,
+      returnedDate: null
+    });
+
+    // Update asset status
+    await updateAsset(asset.id, {
+      ...asset,
+      status: "Assigned",
+      assignedTo: form.value.employeeName
+    });
+
+    await fetchData();
+
+    // Clear form
+    form.value = {
+      assetId: "",
+      employeeName: "",
+      assignedDate: new Date().toISOString().split("T")[0]
+    };
+
+    successMessage.value = "Asset assigned successfully";
+    setTimeout(() => successMessage.value = '', 3000);
+  } catch (err) {
+    console.error("Error assigning asset:", err);
+    error.value = "Failed to assign asset";
+  } finally {
+    isProcessing.value = false;
+  }
 };
 </script>
 
@@ -70,10 +109,18 @@ const handleAssign = () => {
       <!-- Assign Form Card -->
       <div class="card assign-card">
         <h3 class="card-title">New Assignment</h3>
+        
+        <div v-if="error" class="error-message">
+          {{ error }}
+        </div>
+        <div v-if="successMessage" class="success-message">
+          {{ successMessage }}
+        </div>
+
         <form @submit.prevent="handleAssign" class="assign-form">
           <div class="form-group">
             <label>Select Asset</label>
-            <select v-model="formData.assetId" required class="form-control">
+            <select v-model="form.assetId" required class="form-control" :disabled="isProcessing">
               <option value="" disabled>Choose an available asset...</option>
               <option v-for="asset in availableAssets" :key="asset.id" :value="asset.id">
                 {{ asset.name }} ({{ asset.tag }})
@@ -83,28 +130,21 @@ const handleAssign = () => {
           
           <div class="form-group">
             <label>Employee Name</label>
-            <input v-model="formData.employee" required placeholder="e.g. John Doe" class="form-control" />
+            <input v-model="form.employeeName" required placeholder="e.g. John Doe" class="form-control" :disabled="isProcessing" />
           </div>
           
           <div class="form-row">
-            <div class="form-group">
-              <label>Department</label>
-              <input v-model="formData.dept" placeholder="e.g. Engineering" class="form-control" />
-            </div>
-            <div class="form-group">
+            <div class="form-group" style="grid-column: span 2;">
               <label>Assignment Date</label>
-              <input type="date" v-model="formData.date" required class="form-control" />
+              <input type="date" v-model="form.assignedDate" required class="form-control" :disabled="isProcessing" />
             </div>
-          </div>
-          
-          <div class="form-group">
-            <label>Notes (Optional)</label>
-            <textarea v-model="formData.notes" rows="3" placeholder="Add any details about this assignment..." class="form-control"></textarea>
           </div>
           
           <div class="form-actions">
-            <button type="button" class="btn btn-outline" @click="formData = { assetId: '', employee: '', dept: '', date: new Date().toISOString().split('T')[0], notes: '' }">Clear</button>
-            <button type="submit" class="btn btn-primary">Assign Asset</button>
+            <button type="button" class="btn btn-outline" @click="form = { assetId: '', employeeName: '', assignedDate: new Date().toISOString().split('T')[0] }" :disabled="isProcessing">Clear</button>
+            <button type="submit" class="btn btn-primary" :disabled="isProcessing">
+              {{ isProcessing ? 'Processing...' : 'Assign Asset' }}
+            </button>
           </div>
         </form>
       </div>
@@ -117,8 +157,8 @@ const handleAssign = () => {
         <div class="table-container">
           <AppTable :columns="columns" :data="assignments">
             <template #status="{ row }">
-              <span class="status-badge" :class="row.status === 'Active' ? 'active' : 'returned'">
-                {{ row.status }}
+              <span class="status-badge" :class="row.returnedDate ? 'returned' : 'active'">
+                {{ row.returnedDate ? 'Returned' : 'Assigned' }}
               </span>
             </template>
           </AppTable>
@@ -332,5 +372,25 @@ select.form-control {
   background-color: var(--color-background);
   color: var(--color-text-muted);
   border: 1px solid var(--color-border);
+}
+
+.error-message {
+  padding: 0.75rem 1rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: 0.5rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.success-message {
+  padding: 0.75rem 1rem;
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-radius: 0.5rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 </style>
