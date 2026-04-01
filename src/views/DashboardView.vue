@@ -7,43 +7,99 @@ import {
 } from 'lucide-vue-next';
 import StatsCard from '../components/StatsCard.vue';
 
-// Mock Data for Charts (Placeholder)
-const recentActivity = [
-  { id: 1, action: 'Asset Assigned', item: 'MacBook Pro 16"', user: 'Sarah Jenkins', time: '2 mins ago' },
-  { id: 2, action: 'New Asset Added', item: 'Dell XPS 15', user: 'Admin', time: '1 hour ago' },
-  { id: 3, action: 'Asset Returned', item: 'iPhone 13', user: 'Mike Ross', time: '3 hours ago' },
-  { id: 4, action: 'Maintenance', item: 'HP Printer', user: 'Tech Support', time: '1 day ago' },
-];
+import { ref, computed, onMounted } from 'vue';
+import { getAssets } from '../services/assetService';
+import { getAssignments } from '../services/assignmentService';
+
+const assets = ref([]);
+const assignments = ref([]);
+const loading = ref(true);
+const error = ref(null);
+
+onMounted(async () => {
+  try {
+    loading.value = true;
+    const [assetRes, assignRes] = await Promise.all([
+      getAssets(),
+      getAssignments()
+    ]);
+    assets.value = assetRes.data;
+    assignments.value = assignRes.data;
+  } catch (err) {
+    console.error("Error fetching dashboard data", err);
+    error.value = "Failed to load dashboard data. Please try again.";
+  } finally {
+    loading.value = false;
+  }
+});
+
+const totalAssets = computed(() => assets.value.length.toLocaleString());
+
+const assignedAssets = computed(() =>
+  assets.value.filter(a => a.status === "Assigned").length.toLocaleString()
+);
+
+const availableAssets = computed(() =>
+  assets.value.filter(a => a.status === "Available").length.toLocaleString()
+);
+
+const repairAssets = computed(() =>
+  assets.value.filter(a => a.status === "Under Repair").length.toLocaleString()
+);
+
+const recentActivity = computed(() => {
+  return assignments.value
+    .slice(-5)
+    .reverse()
+    .map(a => ({
+      id: a.id,
+      action: 'Asset Assigned',
+      item: a.assetName || `Asset #${a.assetId}`,
+      user: a.employeeName,
+      time: new Date(a.assignmentDate).toLocaleDateString()
+    }));
+});
 </script>
 
 <template>
   <div class="dashboard-container">
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading dashboard data...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="error-state">
+      <p>{{ error }}</p>
+    </div>
+
     <!-- Stats Grid -->
-    <div class="stats-grid">
+    <div v-else class="stats-grid">
       <StatsCard 
         title="Total Assets" 
-        value="1,248" 
+        :value="totalAssets" 
         :icon="Box" 
         color="primary" 
-        :trend="12" 
+        :trend="0" 
       />
       <StatsCard 
         title="Assigned Assets" 
-        value="856" 
+        :value="assignedAssets" 
         :icon="CheckCircle" 
         color="success" 
-        :trend="5" 
+        :trend="0" 
       />
       <StatsCard 
         title="Available Assets" 
-        value="342" 
+        :value="availableAssets" 
         :icon="RotateCcw" 
         color="warning" 
-        :trend="-2" 
+        :trend="0" 
       />
       <StatsCard 
         title="Under Repair" 
-        value="50" 
+        :value="repairAssets" 
         :icon="Wrench" 
         color="danger" 
         :trend="0" 
@@ -86,7 +142,11 @@ const recentActivity = [
           <h3>Recent Activity</h3>
         </div>
         <div class="card-body">
-          <ul class="activity-list">
+          <div v-if="loading" class="loading-text">Loading...</div>
+          <div v-else-if="recentActivity.length === 0" class="empty-state">
+            No recent activity found.
+          </div>
+          <ul v-else class="activity-list">
             <li v-for="item in recentActivity" :key="item.id" class="activity-item">
               <div class="activity-dot"></div>
               <div class="activity-content">
@@ -240,5 +300,40 @@ const recentActivity = [
   .content-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.loading-state, .error-state, .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  background-color: var(--color-surface);
+  border-radius: 1rem;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.error-state {
+  color: var(--color-danger);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
 }
 </style>
