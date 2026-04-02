@@ -1,20 +1,60 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { Plus, Search, Filter } from 'lucide-vue-next';
+import { ref, onMounted, computed, watch } from 'vue';
+import { Plus, Search, Filter, X } from 'lucide-vue-next';
 import AppTable from '../components/AppTable.vue';
 import AppModal from '../components/AppModal.vue';
 import AssetForm from '../components/AssetForm.vue';
 import { getAssets, addAsset, updateAsset, deleteAsset } from '../services/assetService';
+import { getCategories } from '../services/categoryService';
 
 // Data from API
 const assets = ref([]);
+const categories = ref([]);
+
+const searchQuery = ref("");
+const search = ref("");
+const selectedCategory = ref("");
+const selectedStatus = ref("");
+
+let searchTimeout = null;
+watch(searchQuery, (newVal) => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    search.value = newVal;
+  }, 300);
+});
+
+const resetFilters = () => {
+  searchQuery.value = "";
+  search.value = "";
+  selectedCategory.value = "";
+  selectedStatus.value = "";
+};
+
+const filteredAssets = computed(() => {
+  return assets.value.filter(a => {
+    const s = search.value.toLowerCase();
+    const matchesSearch = s ? (
+      (a.name && a.name.toLowerCase().includes(s)) || 
+      (a.tag && a.tag.toLowerCase().includes(s))
+    ) : true;
+      
+    const matchesCategory = selectedCategory.value ? a.category === selectedCategory.value : true;
+    const matchesStatus = selectedStatus.value ? a.status === selectedStatus.value : true;
+    
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+});
 
 onMounted(async () => {
   try {
     const response = await getAssets();
     assets.value = response.data;
+    
+    const catResponse = await getCategories();
+    categories.value = catResponse.data;
   } catch (error) {
-    console.error("Error fetching assets:", error);
+    console.error("Error fetching data:", error);
   }
 });
 
@@ -156,24 +196,53 @@ const getStatusColor = (status) => {
 
     <!-- Toolbar -->
     <div class="toolbar">
-      <div class="search-bar">
-        <Search class="search-icon" />
-        <input type="text" placeholder="Search assets..." class="search-input" />
-      </div>
-      <div class="actions">
-        <button class="btn btn-outline">
-          <Filter class="btn-icon" /> Filter
+      <div class="filters-group">
+        <div class="search-bar">
+          <Search class="search-icon" />
+          <input 
+            type="text" 
+            placeholder="Search assets..." 
+            class="search-input" 
+            v-model="searchQuery" 
+          />
+        </div>
+        
+        <select v-model="selectedCategory" class="filter-select">
+          <option value="">All Categories</option>
+          <option v-for="cat in categories" :key="cat.id" :value="cat.name">
+            {{ cat.name }}
+          </option>
+        </select>
+
+        <select v-model="selectedStatus" class="filter-select">
+          <option value="">All Status</option>
+          <option value="Available">Available</option>
+          <option value="Assigned">Assigned</option>
+          <option value="Repair">Under Repair</option>
+        </select>
+        
+        <button v-if="searchQuery || selectedCategory || selectedStatus" @click="resetFilters" class="btn btn-outline reset-btn">
+          <X class="btn-icon" style="width: 14px; height: 14px;" /> Reset
         </button>
+      </div>
+
+      <div class="actions">
         <button class="btn btn-primary" @click="openAddModal">
           <Plus class="btn-icon" /> Add Asset
         </button>
       </div>
     </div>
 
+    <!-- No Results Message -->
+    <div v-if="filteredAssets.length === 0" class="no-results">
+      <p>No assets found</p>
+    </div>
+
     <!-- Table -->
     <AppTable 
+      v-else
       :columns="columns" 
-      :data="assets" 
+      :data="filteredAssets" 
       actions 
       :selected-row-id="editingAsset?.id"
       :deleting-id="deletingId"
@@ -244,6 +313,41 @@ const getStatusColor = (status) => {
   padding: 1rem;
   border-radius: 0.5rem;
   border: 1px solid var(--color-border);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.filters-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-text-main);
+  outline: none;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.reset-btn {
+  padding: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.no-results {
+  text-align: center;
+  padding: 3rem 1rem;
+  background-color: var(--color-surface);
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 1.125rem;
 }
 
 .search-bar {
