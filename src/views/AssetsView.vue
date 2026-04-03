@@ -46,6 +46,41 @@ const filteredAssets = computed(() => {
   });
 });
 
+const currentPage = ref(1);
+const itemsPerPage = 5;
+
+const totalPages = computed(() => 
+  Math.ceil(filteredAssets.value.length / itemsPerPage)
+);
+
+const paginatedAssets = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return filteredAssets.value.slice(start, end);
+});
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+watch([search, selectedCategory, selectedStatus], () => {
+  currentPage.value = 1;
+});
+
+watch(totalPages, (newTotal) => {
+  if (currentPage.value > newTotal && newTotal > 0) {
+    currentPage.value = newTotal;
+  }
+});
+
 onMounted(async () => {
   try {
     const response = await getAssets();
@@ -242,7 +277,7 @@ const getStatusColor = (status) => {
     <AppTable 
       v-else
       :columns="columns" 
-      :data="filteredAssets" 
+      :data="paginatedAssets" 
       actions 
       :selected-row-id="editingAsset?.id"
       :deleting-id="deletingId"
@@ -256,17 +291,13 @@ const getStatusColor = (status) => {
       </template>
     </AppTable>
 
-    <!-- Pagination (UI Only) -->
-    <div class="pagination">
-      <span class="pagination-info">Showing 1 to 5 of 50 entries</span>
-      <div class="pagination-controls">
-        <button class="btn btn-outline" disabled>Previous</button>
-        <button class="btn btn-primary">1</button>
-        <button class="btn btn-outline">2</button>
-        <button class="btn btn-outline">3</button>
-        <span class="pagination-ellipsis">...</span>
-        <button class="btn btn-outline">10</button>
-        <button class="btn btn-outline">Next</button>
+    <!-- Pagination -->
+    <div v-if="filteredAssets.length > 0" class="pagination">
+      <span class="pagination-info">Total Assets: {{ filteredAssets.length }}</span>
+      <div class="pagination-controls" v-if="totalPages > 1">
+        <button class="btn btn-outline" @click="prevPage" :disabled="currentPage === 1">Previous</button>
+        <span class="pagination-info" style="margin: 0 0.5rem">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button class="btn btn-outline" @click="nextPage" :disabled="currentPage === totalPages">Next</button>
       </div>
     </div>
 
