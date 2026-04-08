@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import AppTable from '../components/AppTable.vue';
 import { getAssets, updateAsset } from "../services/assetService";
 import { getAssignments, addAssignment } from "../services/assignmentService";
@@ -16,6 +16,13 @@ const form = ref({
 const error = ref('');
 const successMessage = ref('');
 const isProcessing = ref(false);
+
+const assetRef = ref(null);
+const empRef = ref(null);
+
+watch(form, () => {
+  error.value = '';
+}, { deep: true });
 
 const columns = [
   { key: 'assetName', label: 'Asset Name' },
@@ -49,8 +56,14 @@ const handleAssign = async () => {
   error.value = '';
   successMessage.value = '';
 
-  if (!form.value.assetId || !form.value.employeeName) {
-    error.value = "All fields are required";
+  if (!form.value.assetId) {
+    error.value = "Asset selection is required";
+    assetRef.value?.focus();
+    return;
+  }
+  if (!form.value.employeeName) {
+    error.value = "Employee name is required";
+    empRef.value?.focus();
     return;
   }
 
@@ -120,7 +133,7 @@ const handleAssign = async () => {
         <form @submit.prevent="handleAssign" class="assign-form">
           <div class="form-group">
             <label>Select Asset</label>
-            <select v-model="form.assetId" required class="form-control" :disabled="isProcessing">
+            <select ref="assetRef" v-model="form.assetId" required class="form-control" :disabled="isProcessing">
               <option value="" disabled>Choose an available asset...</option>
               <option v-for="asset in availableAssets" :key="asset.id" :value="asset.id">
                 {{ asset.name }} ({{ asset.tag }})
@@ -130,7 +143,7 @@ const handleAssign = async () => {
           
           <div class="form-group">
             <label>Employee Name</label>
-            <input v-model="form.employeeName" required placeholder="e.g. John Doe" class="form-control" :disabled="isProcessing" />
+            <input ref="empRef" v-model="form.employeeName" required placeholder="e.g. John Doe" class="form-control" :disabled="isProcessing" />
           </div>
           
           <div class="form-row">
@@ -155,7 +168,10 @@ const handleAssign = async () => {
           <h3 class="card-title">Assignment History</h3>
         </div>
         <div class="table-container">
-          <AppTable :columns="columns" :data="assignments">
+          <div v-if="assignments.length === 0" class="no-results">
+            <p>No assignment history available</p>
+          </div>
+          <AppTable v-else :columns="columns" :data="assignments">
             <template #status="{ row }">
               <span class="status-badge" :class="row.returnedDate ? 'returned' : 'active'">
                 {{ row.returnedDate ? 'Returned' : 'Assigned' }}
@@ -169,6 +185,16 @@ const handleAssign = async () => {
 </template>
 
 <style scoped>
+.no-results {
+  text-align: center;
+  padding: 3rem 1rem;
+  background-color: var(--color-surface);
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 1.125rem;
+}
+
 .assignments-view {
   display: flex;
   flex-direction: column;

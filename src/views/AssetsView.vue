@@ -107,6 +107,7 @@ const loading = ref(false);
 const error = ref('');
 const successMessage = ref('');
 const deletingId = ref(null);
+const assetFormRef = ref(null);
 
 const openAddModal = () => {
   editingAsset.value = null;
@@ -152,8 +153,24 @@ const saveAsset = async (data) => {
   error.value = '';
   
   // Basic validation
-  if (!data.name || !data.tag || !data.category) {
-    error.value = "Please fill all required fields";
+  if (!data.name) {
+    error.value = "Asset name is required";
+    assetFormRef.value?.focusField('name');
+    return;
+  }
+  if (!data.tag) {
+    error.value = "Asset tag is required";
+    assetFormRef.value?.focusField('tag');
+    return;
+  }
+  if (!data.category) {
+    error.value = "Category is required";
+    assetFormRef.value?.focusField('category');
+    return;
+  }
+  if (!data.purchaseDate) {
+    error.value = "Purchase date is required";
+    assetFormRef.value?.focusField('purchaseDate');
     return;
   }
   
@@ -185,6 +202,7 @@ const saveAsset = async (data) => {
     const exists = assets.value.find((a) => a.tag === data.tag);
     if (exists) {
       error.value = "Asset tag must be unique";
+      assetFormRef.value?.focusField('tag');
       return;
     }
     
@@ -308,11 +326,13 @@ const getStatusColor = (status) => {
       @close="showModal = false"
     >
       <AssetForm 
+        ref="assetFormRef"
         :initial-data="editingAsset" 
         :loading="loading"
         :error="error"
         @save="saveAsset" 
         @cancel="showModal = false" 
+        @clear-error="error = ''"
       />
     </AppModal>
   </div>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import AppTable from '../components/AppTable.vue';
 import AppModal from '../components/AppModal.vue';
@@ -19,6 +19,12 @@ const editingCategory = ref(null);
 const formData = ref({ name: '', description: '' });
 const error = ref('');
 const success = ref('');
+const loading = ref(false);
+const nameRef = ref(null);
+
+watch(formData, () => {
+  error.value = '';
+}, { deep: true });
 
 const fetchCategories = async () => {
   try {
@@ -84,6 +90,7 @@ const saveCategory = async () => {
   
   if (!formData.value.name) {
     error.value = 'Category name is required';
+    nameRef.value?.focus();
     return;
   }
 
@@ -93,10 +100,12 @@ const saveCategory = async () => {
 
   if (isDuplicate) {
     error.value = "Category already exists";
+    nameRef.value?.focus();
     return;
   }
 
   try {
+    loading.value = true;
     if (editingCategory.value) {
       await updateCategory(editingCategory.value.id, formData.value);
       success.value = "Category updated successfully";
@@ -110,7 +119,9 @@ const saveCategory = async () => {
     setTimeout(() => success.value = '', 3000);
   } catch (err) {
     console.error('Failed to save category:', err);
-    error.value = 'Failed to save category';
+    error.value = 'Something went wrong';
+  } finally {
+    loading.value = false;
   }
 };
 </script>
@@ -126,7 +137,12 @@ const saveCategory = async () => {
       </button>
     </div>
 
+    <div v-if="categories.length === 0" class="no-results">
+      <p>No categories available</p>
+    </div>
+
     <AppTable 
+      v-else
       :columns="columns" 
       :data="categories" 
       actions 
@@ -144,22 +160,34 @@ const saveCategory = async () => {
       <form @submit.prevent="saveCategory" class="category-form">
         <div class="form-group">
           <label>Category Name</label>
-          <input v-model="formData.name" required />
+          <input ref="nameRef" v-model="formData.name" required :disabled="loading" />
         </div>
         <div class="form-group">
           <label>Description</label>
-          <textarea v-model="formData.description" rows="3"></textarea>
+          <textarea v-model="formData.description" rows="3" :disabled="loading"></textarea>
         </div>
       </form>
       <template #footer>
-        <button class="btn btn-outline" @click="showModal = false">Cancel</button>
-        <button class="btn btn-primary" @click="saveCategory">{{ editingCategory ? "Update Category" : "Add Category" }}</button>
+        <button class="btn btn-outline" @click="showModal = false" :disabled="loading">Cancel</button>
+        <button class="btn btn-primary" :disabled="loading" @click="saveCategory">
+          {{ loading ? "Processing..." : (editingCategory ? "Update Category" : "Add Category") }}
+        </button>
       </template>
     </AppModal>
   </div>
 </template>
 
 <style scoped>
+.no-results {
+  text-align: center;
+  padding: 3rem 1rem;
+  background-color: var(--color-surface);
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 1.125rem;
+}
+
 .categories-view {
   display: flex;
   flex-direction: column;

@@ -16,8 +16,12 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['save', 'cancel']);
+const emit = defineEmits(['save', 'cancel', 'clear-error']);
 
+const nameRef = ref(null);
+const tagRef = ref(null);
+const categoryRef = ref(null);
+const dateRef = ref(null);
 const formData = ref({
   name: '',
   tag: '',
@@ -28,6 +32,10 @@ const formData = ref({
   assignedTo: '',
   notes: ''
 });
+
+watch(() => formData.value, () => {
+  emit('clear-error');
+}, { deep: true });
 
 watch(() => props.initialData, (newVal) => {
   if (newVal) {
@@ -51,23 +59,34 @@ const isEditMode = computed(() => !!props.initialData && !!props.initialData.id)
 const handleSubmit = () => {
   emit('save', { ...formData.value });
 };
+
+const focusField = (fieldName) => {
+  if (fieldName === 'name' && nameRef.value) nameRef.value.focus();
+  if (fieldName === 'tag' && tagRef.value) tagRef.value.focus();
+  if (fieldName === 'category' && categoryRef.value) categoryRef.value.focus();
+  if (fieldName === 'purchaseDate' && dateRef.value) dateRef.value.focus();
+};
+
+defineExpose({
+  focusField
+});
 </script>
 
 <template>
   <form @submit.prevent="handleSubmit" class="asset-form">
     <div class="form-group">
       <label>Asset Name</label>
-      <input v-model="formData.name" required placeholder="e.g. MacBook Pro 16&quot;" class="input-field" />
+      <input ref="nameRef" v-model="formData.name" required placeholder="e.g. MacBook Pro 16&quot;" class="input-field" />
     </div>
     
     <div class="form-row">
       <div class="form-group">
         <label>Asset Tag</label>
-        <input v-model="formData.tag" required placeholder="e.g. AST-001" class="input-field" :disabled="isEditMode" />
+        <input ref="tagRef" v-model="formData.tag" required placeholder="e.g. AST-001" class="input-field" :disabled="isEditMode" />
       </div>
       <div class="form-group">
         <label>Category</label>
-        <select v-model="formData.category" required class="input-field">
+        <select ref="categoryRef" v-model="formData.category" required class="input-field">
           <option value="" disabled>Select Category</option>
           <option>Laptop</option>
           <option>Desktop</option>
@@ -85,7 +104,7 @@ const handleSubmit = () => {
       </div>
       <div class="form-group">
         <label>Purchase Date</label>
-        <input type="date" v-model="formData.purchaseDate" class="input-field" />
+        <input ref="dateRef" type="date" v-model="formData.purchaseDate" required class="input-field" />
       </div>
     </div>
     
