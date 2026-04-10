@@ -3,11 +3,14 @@ import { ref, onMounted, watch } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import AppTable from '../components/AppTable.vue';
 import AppModal from '../components/AppModal.vue';
+import EmptyState from '../components/shared/EmptyState.vue';
+import { useToast } from '../composables/useToast';
 import { getCategories, addCategory, updateCategory, deleteCategory } from '../services/categoryService';
 import { getAssets } from '../services/assetService';
 
 const categories = ref([]);
 const assets = ref([]);
+const toast = useToast();
 
 const columns = [
   { key: 'name', label: 'Category Name' },
@@ -18,7 +21,6 @@ const showModal = ref(false);
 const editingCategory = ref(null);
 const formData = ref({ name: '', description: '' });
 const error = ref('');
-const success = ref('');
 const loading = ref(false);
 const nameRef = ref(null);
 
@@ -32,7 +34,7 @@ const fetchCategories = async () => {
     categories.value = res.data;
   } catch (err) {
     console.error('Failed to fetch categories:', err);
-    error.value = 'Failed to fetch categories';
+    toast.error('Failed to fetch categories');
   }
 };
 
@@ -67,7 +69,7 @@ const openEditModal = (row) => {
 const handleDelete = async (row) => {
   const isUsed = assets.value.some((a) => a.category === row.name);
   if (isUsed) {
-    alert("Category is used in assets");
+    toast.warning("Category is used in assets");
     return;
   }
 
@@ -76,12 +78,11 @@ const handleDelete = async (row) => {
 
   try {
     await deleteCategory(row.id);
-    success.value = "Category deleted successfully";
+    toast.success("Category deleted successfully");
     await fetchCategories();
-    setTimeout(() => success.value = '', 3000);
   } catch (err) {
     console.error('Failed to delete category:', err);
-    alert('Failed to delete category');
+    toast.error('Failed to delete category');
   }
 };
 
@@ -108,15 +109,14 @@ const saveCategory = async () => {
     loading.value = true;
     if (editingCategory.value) {
       await updateCategory(editingCategory.value.id, formData.value);
-      success.value = "Category updated successfully";
+      toast.success("Category updated successfully");
     } else {
       await addCategory(formData.value);
-      success.value = "Category added successfully";
+      toast.success("Category added successfully");
     }
     
     showModal.value = false;
     await fetchCategories();
-    setTimeout(() => success.value = '', 3000);
   } catch (err) {
     console.error('Failed to save category:', err);
     error.value = 'Something went wrong';
@@ -128,8 +128,6 @@ const saveCategory = async () => {
 
 <template>
   <div class="categories-view">
-    <div v-if="success" class="alert success">{{ success }}</div>
-
     <div class="header-actions">
       <h2>Categories</h2>
       <button class="btn btn-primary" @click="openAddModal">
@@ -137,9 +135,11 @@ const saveCategory = async () => {
       </button>
     </div>
 
-    <div v-if="categories.length === 0" class="no-results">
-      <p>No categories available</p>
-    </div>
+    <EmptyState 
+      v-if="categories.length === 0" 
+      title="No categories" 
+      description="Add a new category to get started." 
+    />
 
     <AppTable 
       v-else
@@ -178,16 +178,6 @@ const saveCategory = async () => {
 </template>
 
 <style scoped>
-.no-results {
-  text-align: center;
-  padding: 3rem 1rem;
-  background-color: var(--color-surface);
-  border-radius: 0.5rem;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-size: 1.125rem;
-}
-
 .categories-view {
   display: flex;
   flex-direction: column;
@@ -266,24 +256,6 @@ h2 {
 .form-group input:focus,
 .form-group textarea:focus {
   outline: 1px solid var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-.alert {
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.alert.success {
-  background-color: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-.alert.error {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+    border-color: var(--color-primary);
 }
 </style>

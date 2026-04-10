@@ -82,25 +82,29 @@ th {
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.75rem;
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 1.5rem;
   letter-spacing: 0.05em;
   text-align: left;
+  border-bottom: 2px solid var(--color-border);
 }
 
 td {
-  padding: 1rem 1.5rem;
+  padding: 1.125rem 1.5rem;
   color: var(--color-text-main);
-  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.2s;
+}
+
+tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.015);
 }
 
 tr:hover td {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
 tr.highlighted-row td {
-  background-color: rgba(79, 70, 229, 0.1);
-  border-top-color: var(--color-primary);
-  border-bottom: 1px solid var(--color-primary);
+  background-color: rgba(79, 70, 229, 0.08);
 }
 
 .empty-state {

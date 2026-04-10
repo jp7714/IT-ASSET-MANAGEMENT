@@ -170,6 +170,7 @@ const links = [
 .nav-link.active {
   background-color: var(--color-primary);
   color: white;
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4);
 }
 
 .nav-link.router-link-active:hover,

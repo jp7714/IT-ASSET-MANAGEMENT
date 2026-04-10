@@ -4,12 +4,15 @@ import { Plus, Search, Filter, X } from 'lucide-vue-next';
 import AppTable from '../components/AppTable.vue';
 import AppModal from '../components/AppModal.vue';
 import AssetForm from '../components/AssetForm.vue';
+import EmptyState from '../components/shared/EmptyState.vue';
+import { useToast } from '../composables/useToast';
 import { getAssets, addAsset, updateAsset, deleteAsset } from '../services/assetService';
 import { getCategories } from '../services/categoryService';
 
 // Data from API
 const assets = ref([]);
 const categories = ref([]);
+const toast = useToast();
 
 const searchQuery = ref("");
 const search = ref("");
@@ -105,7 +108,6 @@ const showModal = ref(false);
 const editingAsset = ref(null);
 const loading = ref(false);
 const error = ref('');
-const successMessage = ref('');
 const deletingId = ref(null);
 const assetFormRef = ref(null);
 
@@ -133,17 +135,14 @@ const handleDelete = async (row) => {
     deletingId.value = row.id;
     await deleteAsset(row.id);
     
-    successMessage.value = "Asset deleted successfully";
-    setTimeout(() => {
-      successMessage.value = '';
-    }, 3000);
+    toast.success('Asset deleted successfully');
     
     // Refresh asset list
     const response = await getAssets();
     assets.value = response.data;
   } catch (err) {
     console.error("Error deleting asset:", err);
-    error.value = "Failed to delete asset. Please try again.";
+    toast.error('Failed to delete asset. Please try again.');
   } finally {
     deletingId.value = null;
   }
@@ -185,12 +184,7 @@ const saveAsset = async (data) => {
       assets.value = response.data;
       
       showModal.value = false;
-      successMessage.value = "Asset updated successfully";
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        successMessage.value = '';
-      }, 3000);
+      toast.success('Asset updated successfully');
     } catch (err) {
       console.error("Error updating asset:", err);
       error.value = "Failed to update asset. Please try again.";
@@ -215,12 +209,7 @@ const saveAsset = async (data) => {
       assets.value = response.data;
       
       showModal.value = false;
-      successMessage.value = "Asset added successfully";
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        successMessage.value = '';
-      }, 3000);
+      toast.success('Asset added successfully');
     } catch (err) {
       console.error("Error saving asset:", err);
       error.value = "Failed to save asset. Please try again.";
@@ -242,11 +231,6 @@ const getStatusColor = (status) => {
 
 <template>
   <div class="assets-view">
-    <!-- Success Message -->
-    <div v-if="successMessage" class="success-banner">
-      {{ successMessage }}
-    </div>
-
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="filters-group">
@@ -287,9 +271,11 @@ const getStatusColor = (status) => {
     </div>
 
     <!-- No Results Message -->
-    <div v-if="filteredAssets.length === 0" class="no-results">
-      <p>No assets found</p>
-    </div>
+    <EmptyState 
+      v-if="filteredAssets.length === 0" 
+      title="No assets found" 
+      description="Try adjusting your filters or search query to find what you're looking for." 
+    />
 
     <!-- Table -->
     <AppTable 
@@ -345,17 +331,6 @@ const getStatusColor = (status) => {
   gap: 1.5rem;
 }
 
-.success-banner {
-  background-color: rgba(16, 185, 129, 0.15);
-  color: var(--color-success, #10b981);
-  padding: 1rem;
-  border-radius: 0.5rem;
-  border-left: 4px solid var(--color-success, #10b981);
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-}
-
 .toolbar {
   display: flex;
   justify-content: space-between;
@@ -389,16 +364,6 @@ const getStatusColor = (status) => {
 .reset-btn {
   padding: 0.5rem;
   font-size: 0.875rem;
-}
-
-.no-results {
-  text-align: center;
-  padding: 3rem 1rem;
-  background-color: var(--color-surface);
-  border-radius: 0.5rem;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-size: 1.125rem;
 }
 
 .search-bar {

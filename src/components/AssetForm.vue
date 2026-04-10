@@ -135,7 +135,7 @@ defineExpose({
 
     <!-- Actions -->
     <div class="form-actions">
-      <button type="button" class="btn btn-outline" @click="$emit('cancel')" :disabled="loading">Cancel</button>
+      <button type="button" class="btn btn-secondary" @click="$emit('cancel')" :disabled="loading">Cancel</button>
       <button type="submit" class="btn btn-primary" :disabled="loading">
         {{ loading ? 'Saving...' : (isEditMode ? 'Update Asset' : 'Add Asset') }}
       </button>
@@ -147,7 +147,7 @@ defineExpose({
 .asset-form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.5rem;
 }
 
 .form-row {
@@ -156,56 +156,12 @@ defineExpose({
   gap: 1rem;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-main);
-}
-
-.input-field {
-  padding: 0.625rem 0.875rem;
-  background-color: var(--color-background);
-  border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
-  color: var(--color-text-main);
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.input-field:hover {
-  border-color: #888;
-}
-
-.input-field:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
-}
-
-.input-field:disabled {
-  background-color: var(--color-surface, #f8f9fa);
-  color: var(--color-text-muted);
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.input-field::placeholder {
-  color: var(--color-text-muted);
-  opacity: 0.7;
-}
-
 /* Error Message */
 .error-message {
   color: var(--color-danger, #ef4444);
   font-size: 0.875rem;
   padding: 0.75rem;
-  background-color: var(--color-danger-soft, rgba(239, 68, 68, 0.1));
+  background-color: rgba(239, 68, 68, 0.1);
   border-radius: 0.5rem;
   border-left: 3px solid var(--color-danger, #ef4444);
   margin-top: 0.5rem;
@@ -219,47 +175,6 @@ defineExpose({
   margin-top: 1rem;
   padding-top: 1.25rem;
   border-top: 1px solid var(--color-border);
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.625rem 1.25rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-  border: 1px solid transparent;
-  cursor: pointer;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background-color: var(--color-primary);
-  color: white;
-  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
-}
-
-.btn-primary:hover {
-  background-color: var(--color-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
-}
-
-.btn-outline {
-  background-color: transparent;
-  border-color: var(--color-border);
-  color: var(--color-text-main);
-}
-
-.btn-outline:hover {
-  background-color: var(--color-background);
-  border-color: var(--color-text-muted);
 }
 
 @media (max-width: 640px) {

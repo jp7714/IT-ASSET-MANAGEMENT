@@ -108,7 +108,8 @@ onUnmounted(() => {
 <style scoped>
 .navbar {
   height: 64px;
-  background-color: var(--color-surface);
+  background-color: rgba(30, 41, 59, 0.85); /* var(--color-surface) with opacity */
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;

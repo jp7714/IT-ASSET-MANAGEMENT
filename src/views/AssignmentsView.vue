@@ -1,11 +1,14 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import AppTable from '../components/AppTable.vue';
+import EmptyState from '../components/shared/EmptyState.vue';
+import { useToast } from '../composables/useToast';
 import { getAssets, updateAsset } from "../services/assetService";
 import { getAssignments, addAssignment } from "../services/assignmentService";
 
 const assets = ref([]);
 const assignments = ref([]);
+const toast = useToast();
 
 const form = ref({
   assetId: "",
@@ -14,7 +17,6 @@ const form = ref({
 });
 
 const error = ref('');
-const successMessage = ref('');
 const isProcessing = ref(false);
 
 const assetRef = ref(null);
@@ -54,7 +56,6 @@ onMounted(async () => {
 
 const handleAssign = async () => {
   error.value = '';
-  successMessage.value = '';
 
   if (!form.value.assetId) {
     error.value = "Asset selection is required";
@@ -100,8 +101,7 @@ const handleAssign = async () => {
       assignedDate: new Date().toISOString().split("T")[0]
     };
 
-    successMessage.value = "Asset assigned successfully";
-    setTimeout(() => successMessage.value = '', 3000);
+    toast.success("Asset assigned successfully");
   } catch (err) {
     console.error("Error assigning asset:", err);
     error.value = "Failed to assign asset";
@@ -125,9 +125,6 @@ const handleAssign = async () => {
         
         <div v-if="error" class="error-message">
           {{ error }}
-        </div>
-        <div v-if="successMessage" class="success-message">
-          {{ successMessage }}
         </div>
 
         <form @submit.prevent="handleAssign" class="assign-form">
@@ -168,9 +165,11 @@ const handleAssign = async () => {
           <h3 class="card-title">Assignment History</h3>
         </div>
         <div class="table-container">
-          <div v-if="assignments.length === 0" class="no-results">
-            <p>No assignment history available</p>
-          </div>
+          <EmptyState 
+            v-if="assignments.length === 0" 
+            title="No assignments" 
+            description="You don't have any assignment history yet." 
+          />
           <AppTable v-else :columns="columns" :data="assignments">
             <template #status="{ row }">
               <span class="status-badge" :class="row.returnedDate ? 'returned' : 'active'">
@@ -185,16 +184,6 @@ const handleAssign = async () => {
 </template>
 
 <style scoped>
-.no-results {
-  text-align: center;
-  padding: 3rem 1rem;
-  background-color: var(--color-surface);
-  border-radius: 0.5rem;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-size: 1.125rem;
-}
-
 .assignments-view {
   display: flex;
   flex-direction: column;
@@ -408,15 +397,5 @@ select.form-control {
   margin-bottom: 1.25rem;
   font-size: 0.9rem;
   border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.success-message {
-  padding: 0.75rem 1rem;
-  background-color: rgba(16, 185, 129, 0.1);
-  color: #059669;
-  border-radius: 0.5rem;
-  margin-bottom: 1.25rem;
-  font-size: 0.9rem;
-  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 </style>

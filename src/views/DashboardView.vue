@@ -6,6 +6,8 @@ import {
   Wrench 
 } from 'lucide-vue-next';
 import StatsCard from '../components/StatsCard.vue';
+import LoadingSpinner from '../components/shared/LoadingSpinner.vue';
+import EmptyState from '../components/shared/EmptyState.vue';
 
 import { ref, computed, onMounted } from 'vue';
 import { getAssets } from '../services/assetService';
@@ -64,10 +66,7 @@ const recentActivity = computed(() => {
 <template>
   <div class="dashboard-container">
     <!-- Loading State -->
-    <div v-if="loading" class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading dashboard data...</p>
-    </div>
+    <LoadingSpinner v-if="loading" text="Loading dashboard data..." />
 
     <!-- Error State -->
     <div v-else-if="error" class="error-state">
@@ -142,10 +141,12 @@ const recentActivity = computed(() => {
           <h3>Recent Activity</h3>
         </div>
         <div class="card-body">
-          <div v-if="loading" class="loading-text">Loading...</div>
-          <div v-else-if="recentActivity.length === 0" class="empty-state">
-            No recent activity found.
-          </div>
+          <LoadingSpinner v-if="loading" size="sm" text="Loading..." />
+          <EmptyState 
+            v-else-if="recentActivity.length === 0" 
+            title="No recent activity" 
+            description="There are no recent assignment logs to show."
+          />
           <ul v-else class="activity-list">
             <li v-for="item in recentActivity" :key="item.id" class="activity-item">
               <div class="activity-dot"></div>
@@ -302,7 +303,7 @@ const recentActivity = computed(() => {
   }
 }
 
-.loading-state, .error-state, .empty-state {
+.error-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -318,22 +319,4 @@ const recentActivity = computed(() => {
   color: var(--color-danger);
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid var(--color-border);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading-text {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-}
 </style>
