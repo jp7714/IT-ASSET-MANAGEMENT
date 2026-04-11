@@ -8,7 +8,7 @@
       "brand": "Dell Latitude",
       "purchaseDate": "2025-01-10",
       "status": "Available",
-      "assignedTo": null,
+      "assignedTo": "John Doe",
       "notes": ""
     },
     {
@@ -21,6 +21,17 @@
       "status": "Available",
       "assignedTo": "",
       "notes": ""
+    },
+    {
+      "id": "8329",
+      "name": "Samsung Monitor",
+      "tag": "AST-003",
+      "category": "Monitor",
+      "brand": "Samsung C24F390",
+      "purchaseDate": "2023-01-01",
+      "status": "Repair",
+      "assignedTo": "",
+      "notes": ""
     }
   ],
   "categories": [
@@ -31,8 +42,22 @@
     {
       "id": "2",
       "name": "Monitor"
+    },
+    {
+      "id": "9d5a",
+      "name": "Storage",
+      "description": "Internal and external storage devices."
     }
   ],
-  "assignments": [],
+  "assignments": [
+    {
+      "id": "563c",
+      "assetId": "1",
+      "employeeName": "John Doe",
+      "assignedDate": "2026-04-11",
+      "assetName": "Dell Laptop",
+      "returnedDate": null
+    }
+  ],
   "$schema": "./node_modules/json-server/schema.json"
 }

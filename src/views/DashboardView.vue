@@ -28,9 +28,8 @@ onMounted(async () => {
     assets.value = assetRes.data;
     assignments.value = assignRes.data;
   } catch (err) {
-    console.error("Error fetching dashboard data", err);
-    error.value = "Failed to load dashboard data. Please try again.";
-  } finally {
+      error.value = "Failed to load dashboard data. Please try again.";
+    } finally {
     loading.value = false;
   }
 });
@@ -46,7 +45,7 @@ const availableAssets = computed(() =>
 );
 
 const repairAssets = computed(() =>
-  assets.value.filter(a => a.status === "Under Repair").length.toLocaleString()
+  assets.value.filter(a => a.status === "Repair").length.toLocaleString()
 );
 
 const recentActivity = computed(() => {
@@ -58,7 +57,7 @@ const recentActivity = computed(() => {
       action: 'Asset Assigned',
       item: a.assetName || `Asset #${a.assetId}`,
       user: a.employeeName,
-      time: new Date(a.assignmentDate).toLocaleDateString()
+      time: new Date(a.assignedDate || a.assignmentDate).toLocaleDateString()
     }));
 });
 </script>

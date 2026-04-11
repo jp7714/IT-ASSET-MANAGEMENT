@@ -45,10 +45,9 @@ const fetchData = async () => {
     assets.value = assetRes.data;
     assignments.value = assignRes.data;
   } catch (err) {
-    console.error("Error fetching data:", err);
-    error.value = "Failed to load data";
-  }
-};
+      error.value = "Failed to load data";
+    }
+  };
 
 onMounted(async () => {
   await fetchData();
@@ -103,9 +102,8 @@ const handleAssign = async () => {
 
     toast.success("Asset assigned successfully");
   } catch (err) {
-    console.error("Error assigning asset:", err);
-    error.value = "Failed to assign asset";
-  } finally {
+      error.value = "Failed to assign asset";
+    } finally {
     isProcessing.value = false;
   }
 };

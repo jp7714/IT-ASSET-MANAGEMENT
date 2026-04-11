@@ -4,7 +4,7 @@ import { computed } from 'vue';
 const props = defineProps({
   title: String,
   value: [String, Number],
-  icon: Object,
+  icon: [Object, Function],
   trend: Number,
   color: {
     type: String,

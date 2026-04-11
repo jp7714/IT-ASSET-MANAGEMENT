@@ -33,21 +33,20 @@ const fetchCategories = async () => {
     const res = await getCategories();
     categories.value = res.data;
   } catch (err) {
-    console.error('Failed to fetch categories:', err);
-    toast.error('Failed to fetch categories');
-  }
-};
+      toast.error('Failed to fetch categories');
+    }
+  };
 
 const fetchAssets = async () => {
   try {
     const res = await getAssets();
     assets.value = res.data;
   } catch (err) {
-    console.error('Failed to fetch assets:', err);
-  }
-};
-
-onMounted(async () => {
+      // Handled silently to avoid ui disruption
+    }
+  };
+  
+  onMounted(async () => {
   await fetchCategories();
   await fetchAssets();
 });
@@ -81,10 +80,9 @@ const handleDelete = async (row) => {
     toast.success("Category deleted successfully");
     await fetchCategories();
   } catch (err) {
-    console.error('Failed to delete category:', err);
-    toast.error('Failed to delete category');
-  }
-};
+      toast.error('Failed to delete category');
+    }
+  };
 
 const saveCategory = async () => {
   error.value = '';
@@ -115,12 +113,12 @@ const saveCategory = async () => {
       toast.success("Category added successfully");
     }
     
-    showModal.value = false;
-    await fetchCategories();
-  } catch (err) {
-    console.error('Failed to save category:', err);
-    error.value = 'Something went wrong';
-  } finally {
+      showModal.value = false;
+      formData.value = { name: '', description: '' };
+      await fetchCategories();
+    } catch (err) {
+      error.value = 'Something went wrong';
+    } finally {
     loading.value = false;
   }
 };

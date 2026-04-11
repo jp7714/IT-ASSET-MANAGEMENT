@@ -92,8 +92,8 @@ onMounted(async () => {
     const catResponse = await getCategories();
     categories.value = catResponse.data;
   } catch (error) {
-    console.error("Error fetching data:", error);
-  }
+      // error fetching data is managed safely
+    }
 });
 
 const columns = [
@@ -141,9 +141,8 @@ const handleDelete = async (row) => {
     const response = await getAssets();
     assets.value = response.data;
   } catch (err) {
-    console.error("Error deleting asset:", err);
-    toast.error('Failed to delete asset. Please try again.');
-  } finally {
+      toast.error('Failed to delete asset. Please try again.');
+    } finally {
     deletingId.value = null;
   }
 };
@@ -173,6 +172,10 @@ const saveAsset = async (data) => {
     return;
   }
   
+  if (data.status !== 'Assigned') {
+    data.assignedTo = '';
+  }
+  
   if (editingAsset.value && editingAsset.value.id) {
     // Update logic
     try {
@@ -186,9 +189,8 @@ const saveAsset = async (data) => {
       showModal.value = false;
       toast.success('Asset updated successfully');
     } catch (err) {
-      console.error("Error updating asset:", err);
-      error.value = "Failed to update asset. Please try again.";
-    } finally {
+        error.value = "Failed to update asset. Please try again.";
+      } finally {
       loading.value = false;
     }
   } else {
@@ -211,9 +213,8 @@ const saveAsset = async (data) => {
       showModal.value = false;
       toast.success('Asset added successfully');
     } catch (err) {
-      console.error("Error saving asset:", err);
-      error.value = "Failed to save asset. Please try again.";
-    } finally {
+        error.value = "Failed to save asset. Please try again.";
+      } finally {
       loading.value = false;
     }
   }
